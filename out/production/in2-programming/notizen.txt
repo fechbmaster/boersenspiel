@@ -1,0 +1,218 @@
+Gruppennummer 29
+
+
+Ist nun vielleicht etwas vewirrend, da anders.. Aber insgesamt durchaus sinnvoller als unsere 1000 Packages zuvor. Zumal die alten Komponenten ja kaum noch angelangt werden.
+
+Fast alles spielt sich nun ab im util package. Einzige Abwandlung beim "alten" Zeugs: "stockgame.ui.console".. darin soll der neue StockGameCommandProcessor entstehen. Ich habe den alten 
+nicht einfach umbenannt, weil die Funktionsweise schon arg abweichen wird. Teile werden wir vielleicht kopieren können, aber ich glaub nicht an viel :D
+Grundgerüst dafür habe ich schon geschrieben...
+
+Ich habe versucht auch alle anderen Klassen - zumindest als Grundgerüst - schonmal zu schreiben. Hatte dabei aber extrem viele WTFs vor den Augen :D Mal schauen, ob das an der
+Tagesform oder der Aufgabenstellung liegt :D
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+18.04.13
+=> Manchmal fühle ich mich, als würde er ständig neues Zeug in die Aufgabe schreiben...
+	". Da wir diesen auch an anderer Stelle wieder brauchen, sollte per Singleton-Pattern ein globaler Timer in Ihrem Programm verfügbar sein."
+	Hab also nen Singleton-Timer in userInteraction (ehemals gui) eingeführt.
+	An jeder stelle wo nun ein Timer benötigt wird, wird StockTimer.getInstance() aufgerufen um dem ganzen gerecht zu werden..
+	
+	CommandProcessor funzt. Viele Trys und Catches, aber das ist ja ein hausgemachtes Problem der Exceptions.
+	kann nun kaufen / verkaufen / ausgeben aller Spieler, aktien und  assets von Spieler x)
+	
+	
+	"Führen Sie dafür die Klasse StockGameLauncher ein, in deren main()-Methode die entsprechenden Klassen instanziiert, zusammengefügt und ggf. gestartet werden."
+	
+	
+	Vielleicht hab ich auch noch was anderes gemacht.. aber das war so unwichtig, dass ich es vergessen hab. 
+	
+	"Versuchen Sie bei der Gelegenheit die Begriffe Callback, geschachtelte, innere und anonyme Klasse, die Sie schon in der Vorl. gehört haben, Ihren konkreten Schöpfungen zuzuordnen."
+	Da sollten wir vielleicht nochmal drüber gucken :o
+	
+==>
+==>  	ÜBERLEG DIR BITTE NOCH ob ich logikfehler im CommandProcessor hab. Mit anderen worten verusch ihn mal dazu zu bringen ne Exception zu werfen :)
+==>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Der einfachheit halber: Ich schreibe nun mit => am anfang.. du halt weiter mit --> oder -> sonstwas :P //geht klar	:)
+
+---> wollte die equals ausbessern, aber hab da noch ein paar Fragen offen. Mache an anderer Stelle weiter
+und wir reden am Montag einfach nochmal-barni 13.04.
+=> Hab nun die Hauptkritik beseitigt. String.equals() zum Vergleich der Namen und Object wird überschrieben. Kontostand ect. kann man jetzt ja noch einbasteln wo nötig.
+
+=> AccountManagerImpl mit "Dummy"-toString ausgestattet. Er wollte ja gern eine..
+
+---> Methode findPlayerIndex abgewandelt in findPlayer (AccountManagerImpl), 
+gibt jetzt nicht den Index sondern gleich den Player zurück, 
+nach dem Wunsch vom Meixner, Rest des Codes angepasst-barni 13.04.
+=> Achtung bei den equals Methoden. Steht da ein String im Parameter funktioniert der Aufruf wunderbar. 
+	Aber wir müssen nun wirklich IMMER die Objekte selber da rein stecken, oder wenn du einen
+	Namen vergleichen willst zB share.getName().equals(vergleichsname) benutzen. Sonst haut da nix mehr hin :<
+	Den Fehler habe ich aber grad selber erst erzeugt, dadurch, dass ich die Equals auf Object umgestellt habe.
+
+
+=> CashAccount Gutschriften und Abbuchungen an AccountManagerImpl übergeben. EBenfalls Meixners wunsch gewesen. 
+	Daher ShareDeposit sell() nun reduceShare(), buy() nun addShare()  
+=> Diverse Fehlerausgaben von String auf Exceptions geändert. (in diesem Zuge ist ElementNotFoundException 
+	aufgespaltet worden in PlayerElementNotFound und ShareElementNotFoundException
+	==> Die Try-Catch-Blöcke, die RuntimeExceptions fangen sind wohl nicht ganz der Standard. 
+		Aber für den Moment beim Schreiben its es einfach am angenehmsten weil ich die Testimplementation
+		nicht abwandeln muss :D
+
+=> habe angefangen einige Methoden in StockPriceProvider umzuziehen.. 
+
+---> das gleiche bei der Methode findShareIndex, heißt jetzt findShare (AccountManagerImpl)-barni 13.04.
+
+
+
+---> resize Methoden für die Array Puffer als extra Methoden gemacht-barni 13.04.
+
+---> angefangen package stockprice-barni 13.04.
+
+
+
+
+
+
+
+
+
+
+1. Teil: Aktienkurse und ihre Anpassung
+Aktien, deren Kurs sich nicht Ã¤ndert, sind langweilig, nicht?
+>> Seperation of Concerns
+ Konkret fÃ¼hren wir ein neues Interface namens StockPriceInfo ein, in dem wir alle Methoden ablegen,
+ die Ã¼ber Aktienkurse Auskunft geben (ein rudimentÃ¤rer Vorschlag findet sich in Anhang 1).
+ Aus AccountManager verschwinden sie damit natÃ¼rlich.
+
+
+>> Aktienkurs-Aktualisierungen
+MÃ¶glichkeiten: (immer konstant wie bisher, per Zufall, durch Abholen von einem BÃ¶rsen-Server, ...). 
+Verschiedene von diesen Optionen sollen (in Form von Providern) in unserer Software unterstÃ¼tzt werden kÃ¶nnen, 
+ohne dass bei deren Austausch sehr viel zu Ã¤ndern sein sollte (mÃ¶glichst Plugin-Prinzip realisieren) . 
+
+
+Mit der EinfÃ¼hrung eines dedizierten Interfaces ist dafÃ¼r schon ein wichtiger Schritt getan.
+Neue Klasse StockPriceProvider Mit Infrastruktur Ã¤hnlich Anhang 1
+
+ Sie soll als Basisklasse fÃ¼r alle konkreten Provider-Klassen fungieren. 
+ 
+ Die im Interface versprochenen FunktionalitÃ¤ten
+  sollten auf Basis des Array-Caches im wesentlichen in dieser Basis-Klasse bereits implementiert werden kÃ¶nnen 
+  (im Grunde schon in Aufg. 2 an anderem Ort realisiert). Unterscheiden werden sich die diversen Provider in der 
+  Art und Weise, wie der Cache-Inhalt aufgefrischt wird. DafÃ¼r ist die Methode updateShareRate(Share share) einzuplanen. 
+  Sie ist notwendigerweise abstrakt. DemgegenÃ¼ber sollten Sie updateShareRates() schon ausformulieren kÃ¶nnen (Hook-Gedanke!). 
+  
+
+Taktgeber fÃ¼r cache-update-methode
+		=> Start Ã¼ber startUpdate()
+
+timer als Singleton-Pattern;  ein globaler Timer in Ihrem Programm 
+ Nach Studium der Demo sollten Sie in der Lage sein einen regelmÃ¤ÃŸigen Update 
+Ihres Caches hinzukriegen (Methode startUpdate() implementieren). Versuchen Sie bei der Gelegenheit die Begriffe Callback,
+ geschachtelte, innere und anonyme Klasse, die Sie schon in der Vorl. gehÃ¶rt haben, Ihren konkreten SchÃ¶pfungen zuzuordnen.
+ 
+  konkrete Provider durch Ableiten von StockPriceProvider zu definieren, zu instanziieren und zum Laufen zu bringen.
+Der einfachste Provider ist ConstStockPriceProvider => konstante aktienpreise
+	Beachten Sie dabei , dass nach dem Refactoring die Klasse AccountManagerImpl eine Instanz von StockPriceProvider braucht,
+ 	um Zugriff auf Share-Objekte zu erhalten.
+ 
+Definieren Sie nun auch eine Klasse RandomStockPriceProvider, die basierend auf Pseudozufallszahlen die Aktienkurse in 
+	jedem Schritt etwas vom bisherigen Wert abweichen lÃ¤sst (Dazu Klasse java.util.Random verwenden). 
+Wer (vielleicht naiverweise) denkt, dass Aktienkurse nicht zufallsbedingt schwanken, kann sich gerne einen anderen 
+	Provider ausdenken (z. B. ManipulatedStockPriceProvider).
+
+2. Teil: Anzeige von Aktienkursen / BÃ¶rsenticker - Fenster
+Wenn die Spieler zielgerichtet Aktien kaufen und verkaufen sollen, dann mÃ¼ssen sie sich zwangslÃ¤ufig informieren kÃ¶nnen, 
+wie die Kurse sich Ã¤ndern. Die Schnittstelle StockPriceInfo bietet diese Information bereits an, somit kommt es nur darauf
+ an, diese den Spielern passend zu offerieren. Ãœber ein Kommando immer wieder nachzufragen ist offensichtlich zu "lÃ¤stig".
+  Wir wollen eine sich selbst aktualisierende Anzeige auf dem Bildschirm, mÃ¶glichst in einem eigenen (graphischen) Fenster,
+   so dass wir parallel dazu unsere BÃ¶rsengeschÃ¤fte abwickeln kÃ¶nnen - immer mit einem Auge auf dem BÃ¶rsenticker-Fenster.
+
+Das Codefragment ViewerDemo sollte genÃ¼gend Anschauungsmaterial dafÃ¼r liefern, wie so ein BÃ¶rsenticker-Fenster realisiert 
+ werden kann, in dem die Kurse aller gelisteten Aktien dargestellt werden. Es gilt nur, die Schnittstelle StockPriceInfo 
+  anzubinden. Und verwenden Sie bitte denselben Timer, den Sie schon im 1. Teil eingefÃ¼hrt haben.
+
+Wenn Sie gleichzeitig noch mehr Information haben wollen, z. B. wieviel sind welche Assets im Vergleich zum Kauf noch/schon 
+ wert, so steht es Ihnen selbstverstÃ¤ndlich frei, weitere Ticker-Fenster zu realisieren.
+
+3. Teil: Alles zusammen
+Nachdem die Einzelteile erstellt sind, gilt es eine (modulare) Applikation daraus zu bauen. FÃ¼hren Sie dafÃ¼r die 
+ Klasse StockGameLauncher ein, in deren main()-Methode die entsprechenden Klassen instanziiert, zusammengefÃ¼gt und 
+  ggf. gestartet werden.
+
+
+Freiwillig?! Kommandozeilenbasierte Eingabe wie editor letztes Semester
+Sonst => Testimplementierung
+
+
+aktualisiertes Klassenmodell / Klassendiagramm
+
+
+
+Checked Exceptions => Sind Fehler die idr. auï¿½erhalb des Einflussbereichs des Programmierers liegen (Falsche Benutzereingaben, Datenbankprobleme, Netzwerkausfï¿½lle, fehlende Dateien)
+					MUSS behandelt werden. (Bessere Variante - Sofern die Logik nicht angepasst werdne kann um den Fehlerfall auszuschlieï¿½en - um Eingaben ect. zu Kontrollieren.) 
+Unchecked Exceptions => "Bugs". Falsche Argumente ï¿½bergeben ect... Fehler von denen sich ein Programm wï¿½hrend der Laufzeit nicht mehr "erhohlen" kann.
+					muss NICHT behandelt werden. (eig. nur geeignet um Bugs der eigenen Programmierung aufzuzeigen?!^^)
+
+
+Aktuelle ï¿½nderungen:
+statt mit original Accounts und Shares in AccountManagerImpl zu arbeiten, habe ich nun wie auch in den anderen Programmteilen den Index genommen. Warum? Erklï¿½r ich dir auf anfrage ;-) 
+Kurzform: Macht es auf jeden Fall leichter Feherzustï¿½nde zu erkennen.
+
+
+
+//Old stuff
+
+Assets => Asset
+value aus Asset entfernt (Value wird nun bei Abfrage vom Wert immer aktuell bestimmt.)
+			Ausnahme ==> CashAccount.. da werd ich wohl um einen Kontostand nicht herum kommen :D
+
+
+
+.equals in Asset implementiert. (Das gehï¿½rte schon da hin, oder? :D)
+kleinere Fummeleien / verschï¿½nerungen(Return statt else)
+
+ShareDeposit => Array vergrï¿½ï¿½ern / verkleinern in 5er-Schritten + merken aktueller Stelle. 
+(Eig. gedebugged.. sollte also funktionieren. Darfst aber gern nochmal kontrollieren ;))
+
+shareItem => nicht ganz eingefï¿½hrter Kaufpreis. Weiï¿½ noch nicht ganz genau wie ich spï¿½teres hinzukaufen / verkaufen handhaben will.. 
+	Ein gekauftes Aktienpaket mag einen gewissen Kaufpreis haben. Verkaufe ich nun die hï¿½lfte der Aktien kann ich auch ganz easy sagen ich halbiere den Ursprungswert des Items.
+	Kaufe ich aber erst 100 Aktien, und dann 50 zu einem anderen Preis, und verkaufe dann 25 wird das ganze irgendwie blï¿½de :D
+	
+Account Klasse war zwar nicht explizit gefordert, aber ï¿½bernimmt nun halt die Rolle des Spielers. (anders machts eher keinen Sinn, oder? :D)
+	Grundgerï¿½st ist da, lust aber heute nicht mehr. Also entweder schaust du es dir heute nochmal an oder eben nicht. :P
+
+	
+Sell-Methode in Account und AccountManagerImpl eingefï¿½hrt-Barni
+
+
+
+
